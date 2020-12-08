@@ -66,12 +66,12 @@ import javax.swing.JTextArea;
 import java.awt.Rectangle;
 
 public class ScanFoldGui extends JDialog {
-	
+
 	private String sequence;
 	private String sequenceName;
 	private int sequenceStart;
 	private boolean resultsInNewWindow;
-	
+
 	private final JPanel contentPanel = new JPanel();
 	private JTextField windowSize;
 	private JLabel lblWindowSize;
@@ -81,10 +81,12 @@ public class ScanFoldGui extends JDialog {
 	private JTextField shuffleType;
 	private JTextField temperature;
 	private JTextField competition;
+	private JTextField outstrand;
 	private JLabel lblRandomizations;
 	private JLabel lblShuffletype;
 	private JLabel lblTemperature;
 	private JLabel lblCompetition;
+	private JLabel lblOutStrand;
 	private JButton runButton;
 	private JButton closeButton;
 	private JTextArea outputText;
@@ -261,6 +263,27 @@ public class ScanFoldGui extends JDialog {
 			contentPanel.add(competition, gbc_competition);
 		}
 		{
+			lblOutStrand = new JLabel("Strand");
+			GridBagConstraints gbc_lblOutStrand = new GridBagConstraints();
+			gbc_lblOutStrand.insets = new Insets(0, 0, 5, 5);
+			gbc_lblOutStrand.anchor = GridBagConstraints.EAST;
+			gbc_lblOutStrand.gridx = 0;
+			gbc_lblOutStrand.gridy = 5;
+			contentPanel.add(lblOutStrand, gbc_lblOutStrand);
+		}
+		{
+			outstrand = new JTextField();
+			lblCompetition.setLabelFor(outstrand);
+			outstrand.setToolTipText("");
+			outstrand.setText("forward");
+			GridBagConstraints outstrand = new GridBagConstraints();
+			gbc_outstrand.insets = new Insets(0, 0, 5, 0);
+			gbc_outstrand.fill = GridBagConstraints.HORIZONTAL;
+			gbc_outstrand.gridx = 1;
+			gbc_strand.gridy = 5;
+			contentPanel.add(outstrand, gbc_outstrand);
+		}
+		{
 			globalRefold = new JCheckBox("Global Refold");
 			globalRefold.setSelected(true);
 			globalRefold.setToolTipText("When checked, this option will refold your entire sequence while constraining the most significant base pairs (with Zavg values < -1 and < -2).\n");
@@ -330,13 +353,13 @@ public class ScanFoldGui extends JDialog {
 				buttonPane.add(closeButton);
 			}
 		}
-		
+
         addWindowListener(new WindowAdapter() {
             public void windowClosing(WindowEvent windowEvent) {
                 close();
             }
         });
-        
+
         redirectSystemStreams();
 	}
 
@@ -361,9 +384,9 @@ public class ScanFoldGui extends JDialog {
 
         mainWindow.setVisible(true);
     }
-    
+
     public static String extractSequence(Genome genome, String chr, int start, int end, Strand strand) {
-    	
+
     	String retSequence = "";
         try {
             //IGV.getMainFrame().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
@@ -382,14 +405,14 @@ public class ScanFoldGui extends JDialog {
             }
 
         } finally {
-        	
+
             //IGV.getMainFrame().setCursor(Cursor.getDefaultCursor());
         }
-        
+
         return retSequence;
-        
+
     }
-    
+
 	private String writeSequenceToTempFile() {
 		String tempFilePath = "";
 		try {
@@ -406,8 +429,8 @@ public class ScanFoldGui extends JDialog {
 		}
 		return tempFilePath;
 	}
-    
-    
+
+
     private abstract class IgvToolsSwingWorker extends SwingWorker{
 
         @Override
@@ -421,7 +444,7 @@ public class ScanFoldGui extends JDialog {
     private void updateTextArea(final String text) {
     	updateTextArea(text, false);
     }
-    
+
     private void updateTextArea(final String text, boolean addNewline) {
         SwingUtilities.invokeLater(new Runnable() {
             public void run() {
@@ -432,7 +455,7 @@ public class ScanFoldGui extends JDialog {
             }
         });
     }
-   
+
     private void redirectSystemStreams() {
         OutputStream out = new OutputStream() {
             @Override
@@ -457,17 +480,17 @@ public class ScanFoldGui extends JDialog {
         System.setOut(new PrintStream(out, true));
         System.setErr(new PrintStream(out, true));
     }
-    
+
     private void close() {
         System.setErr(systemErrStream);
         System.setOut(systemOutStream);
         dispose();
     }
-    
+
     private void showMessage(String tool) {
         JOptionPane.showMessageDialog(this, tool);
     }
-    
+
     private String executeShellCommand(String cmd[], String[] envp, File dir, boolean waitFor) throws IOException {
         Process pr = RuntimeUtils.startExternalProcess(cmd, envp, dir);
 
@@ -527,18 +550,18 @@ public class ScanFoldGui extends JDialog {
 			}
 		}
     }
-    
+
     private void run() {
 		SwingWorker swingWorker = new IgvToolsSwingWorker() {
 
 			@Override
 			protected Object doInBackground() {
 				try {
-					
+
 					String inputFile = writeSequenceToTempFile();
-					
+
 					Map<String, String> env = System.getenv();
-					
+
 					ArrayList<String> cmd = new ArrayList<>(Arrays.asList(new String[] {
 							env.get("SCANFOLDRUNSCRIPT"),
 							"-i", inputFile,
@@ -550,27 +573,28 @@ public class ScanFoldGui extends JDialog {
 							"-y", shuffleType.getText(),
 							"-t", temperature.getText(),
 							"-z", String.valueOf(sequenceStart),
+							"-d". outstrand.getText()
 					}));
-					
+
 					if (globalRefold.isSelected()) {
 						cmd.add("-g");
 					}
-					
+
 					if (resultsInNewWindow) {
 						cmd.add("-j");
 						cmd.add(new File(ScanFoldGui.class.getProtectionDomain().getCodeSource().getLocation().toURI()).getPath());
 					}
-					
-					
+
+
 					String result = executeShellCommand(cmd.toArray(new String[cmd.size()]), null, new File(env.get("SCANFOLDRUNDIR")), false);
-					
+
 					if (!resultsInNewWindow) {
 						String startSentinel = "BATCHFILEFIRSTSENTINEL";
 						String endSentinel = "BATCHFILESECONDSENTINEL";
 						String batchFile = result.substring(result.indexOf(startSentinel) + startSentinel.length(), result.indexOf(endSentinel));
 						runBatchFile(batchFile);
 					}
-					
+
 				} catch (IOException e) {
 					showMessage(e.getMessage());
 				} catch (URISyntaxException e) {
