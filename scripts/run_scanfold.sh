@@ -74,6 +74,7 @@ python ${SCRIPTDIR}/ScanFold-Scan_IGV.py \
     -s ${STEPSIZE} \
     -t ${TEMPERATURE} \
     -w ${WINDOWSIZE} \
+    -d ${STRAND} \
     --start ${STARTPOS} \
     --name "${SEQUENCENAME}" \
     -type ${RANDOMIZATIONTYPE} \
