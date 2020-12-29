@@ -7,7 +7,7 @@ Patched version of IGV that integrates ScanFold functionality.
 * python3
 * jdk 11 (newer may work, haven't tested)
 
-### fedora
+### on fedora (not needed on mac)
 ```
 sudo dnf install git zip patch java-11-openjdk.x86_64 gcc g++ python3-devel zlib-devel tar make
 ```
@@ -16,7 +16,7 @@ sudo dnf install git zip patch java-11-openjdk.x86_64 gcc g++ python3-devel zlib
 
 ### Build IGV (CI currently only does this)
 
-1. clone this repository recursively
+1. clone this repository recursively (git clone --recursive https://github.com/rjandr/scanfoldigv)
 1. `./scripts/apply_patch.sh`
 1. `./scripts/build_igv.sh`
 
